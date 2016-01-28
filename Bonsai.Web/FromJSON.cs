@@ -19,39 +19,27 @@ namespace BonsaiWeb
     {
         public string Schema { get; set; }
 
-        private int type_id;
 
         public FromJSON()
         {
-            Schema = @"{
-                {""type"":""object"",""properties"":{""type"": {""type"": ""string""},""status"":{""type"": ""string""},""message"":{""type"": ""string""}}}
-            }";
+            // The default object has a dictionary with additional properties
+            // it is therefore able to contain any possible JSON string.
+            Schema = "{\"type\":\"object\"}";
         }        
 
 
         protected override Expression BuildSelector(Expression argument)
         {
-            //var builder = Expression.Constant(JsonConvert);
-            type_id += 1;
+            // There is no exception handling here, because Bonsai takes
+            // care of that for us.
 
-            try {
-                var schema = JSchema.Parse(Schema);
-                Type outputType = JSONSchemaTypeBuilder.Instance.SchemaToType(schema);
-                return Expression.Call(
-                    typeof(JsonConvert),
-                    "DeserializeObject", 
-                    new[] { outputType }, 
-                    new[] { argument });
-
-            } catch(JSchemaReaderException readerException) {
-                Debug.WriteLine("JSchemaReaderException: " + readerException.Message);
-                //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
-                throw readerException;
-            } catch(ArgumentException argumentException) {
-                Debug.WriteLine("ArgumentException: duplicate type name?");
-                //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
-                throw argumentException;
-            } 
+            var schema = JSchema.Parse(Schema);
+            Type outputType = JSONSchemaTypeBuilder.Instance.SchemaToType(schema);
+            return Expression.Call(
+                typeof(JsonConvert),
+                "DeserializeObject", 
+                new[] { outputType }, 
+                new[] { argument });
         }        
     }
 }
