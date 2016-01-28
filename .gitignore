@@ -1,0 +1,4 @@
+*.dll
+
+Bonsai.Web/bin
+Bonsai.Web/obj
