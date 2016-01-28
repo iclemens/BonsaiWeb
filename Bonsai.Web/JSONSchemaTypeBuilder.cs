@@ -100,10 +100,7 @@ namespace BonsaiWeb
          */
         private Tuple<bool, Type> FindCachedType(JSchema schema)
         {
-            Debug.WriteLine("Trying to find pre-existing type...");
-            Debug.WriteLine("Type cache has " + typeCache.Count() + " entries");
             foreach(var entry in typeCache) {
-                Debug.WriteLine("Comparing with " + entry.Value.GetType().Name);
                 if (CompareSchemas(schema, entry.Key)) {                    
                     return new Tuple<bool, Type>(true, entry.Value);
                 }
@@ -123,11 +120,8 @@ namespace BonsaiWeb
             Tuple<bool, Type> result = FindCachedType(schema);
 
             if(result.Item1) {
-                Debug.WriteLine("Found");
                 return result.Item2;
             }
-
-            Debug.WriteLine("Not found");
 
             string typeName = GenerateTypeName();
 
@@ -156,7 +150,6 @@ namespace BonsaiWeb
             Type objectType = typeBuilder.CreateType();
 
             typeCache[schema] = objectType;
-            Debug.WriteLine("Type cache has " + typeCache.Count() + " entries");
             return objectType;
         }
 
