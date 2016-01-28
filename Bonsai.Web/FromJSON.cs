@@ -19,13 +19,10 @@ namespace BonsaiWeb
     {
         public string Schema { get; set; }
 
-        private JSONTypeBuilder jtb;
         private int type_id;
 
         public FromJSON()
         {
-            jtb = new JSONTypeBuilder();
-
             Schema = @"{
                 {""type"":""object"",""properties"":{""type"": {""type"": ""string""},""status"":{""type"": ""string""},""message"":{""type"": ""string""}}}
             }";
@@ -38,14 +35,14 @@ namespace BonsaiWeb
             type_id += 1;
 
             try {
-                Debug.WriteLine("Generating type...");
                 var schema = JSchema.Parse(Schema);
-                Type outputType = jtb.SchemaToType("root" + type_id, schema);
+                Type outputType = JSONSchemaTypeBuilder.Instance.SchemaToType(schema);
                 return Expression.Call(
                     typeof(JsonConvert),
                     "DeserializeObject", 
                     new[] { outputType }, 
                     new[] { argument });
+
             } catch(JSchemaReaderException readerException) {
                 Debug.WriteLine("JSchemaReaderException: " + readerException.Message);
                 //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
@@ -54,12 +51,7 @@ namespace BonsaiWeb
                 Debug.WriteLine("ArgumentException: duplicate type name?");
                 //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
                 throw argumentException;
-            } catch (Exception exception) {
-                Debug.WriteLine("Exception: " + exception.Message);
-                // Something went wrong, how do we handle it?
-                //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
-                throw exception;
-            }
+            } 
         }        
     }
 }

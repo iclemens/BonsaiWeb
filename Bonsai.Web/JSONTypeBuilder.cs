@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Diagnostics;
+
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -11,19 +13,103 @@ using Newtonsoft.Json.Schema;
 
 namespace BonsaiWeb
 {
-    class JSONTypeBuilder
+    public sealed class JSONSchemaTypeBuilder
     {
         private AssemblyBuilder assemblyBuilder;
         private ModuleBuilder moduleBuilder;
+        private Dictionary<JSchema, Type> typeCache;
+
+        private int count;
 
 
-        public JSONTypeBuilder()
+        /**
+         * Singleton class
+         */
+        private static readonly JSONSchemaTypeBuilder instance = new JSONSchemaTypeBuilder();
+
+        public static JSONSchemaTypeBuilder Instance { 
+            get {
+                return instance;
+            } 
+        }
+
+
+        public JSONSchemaTypeBuilder()
         {
             AssemblyName assemblyName =
                 new AssemblyName("JSONSchemaGeneratedTypes");
 
             assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
             moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
+
+            typeCache = new Dictionary<JSchema,Type>();
+            count = 0;
+        }
+
+
+        /**
+         * Returns a name for a new type
+         */
+        private string GenerateTypeName()
+        {
+            string name = "DynamicType" + count;
+            count++;
+
+            return name;
+        }
+
+
+        /**
+         * Compares to JSchemas to see if they are the same.
+         */
+        private bool CompareSchemas(JSchema one, JSchema two)
+        {
+            if(one.Type != two.Type)
+                return false;
+
+            if(one.Type == JSchemaType.Object) {
+                if (one.Properties.Count() != two.Properties.Count())
+                    return false;
+
+                foreach (var entry in one.Properties) {
+                    if(!two.Properties.ContainsKey(entry.Key))
+                        return false;
+
+                    if (!CompareSchemas(entry.Value, two.Properties[entry.Key]))
+                        return false;
+                }
+            }
+
+            if(one.Type == JSchemaType.Array) {
+                if(one.Items.Count() != two.Items.Count())
+                    return false;
+
+                for (var i = 0; i < one.Items.Count(); i++) {
+                    if (!CompareSchemas(one.Items[i], two.Items[i]))
+                        return false;
+                }
+            }
+
+            // Types and subproperties are not different, and thus the same
+            return true;
+        }
+
+
+        /**
+         * Check if we've created a type for this schema previously
+         */
+        private Tuple<bool, Type> FindCachedType(JSchema schema)
+        {
+            Debug.WriteLine("Trying to find pre-existing type...");
+            Debug.WriteLine("Type cache has " + typeCache.Count() + " entries");
+            foreach(var entry in typeCache) {
+                Debug.WriteLine("Comparing with " + entry.Value.GetType().Name);
+                if (CompareSchemas(schema, entry.Key)) {                    
+                    return new Tuple<bool, Type>(true, entry.Value);
+                }
+            }
+
+            return new Tuple<bool, Type>(false, typeof(void));
         }
 
 
@@ -32,9 +118,20 @@ namespace BonsaiWeb
          * 
          * Note that this does not handle additionalProperties, which behave like dictionaries.
          */
-        protected Type ObjectToType(string typeSignature, JSchema schema)
+        private Type ObjectToType(JSchema schema)
         {
-            TypeBuilder typeBuilder = moduleBuilder.DefineType(typeSignature,
+            Tuple<bool, Type> result = FindCachedType(schema);
+
+            if(result.Item1) {
+                Debug.WriteLine("Found");
+                return result.Item2;
+            }
+
+            Debug.WriteLine("Not found");
+
+            string typeName = GenerateTypeName();
+
+            TypeBuilder typeBuilder = moduleBuilder.DefineType(typeName,
                 TypeAttributes.Public | TypeAttributes.Class |
                 TypeAttributes.AutoClass | TypeAttributes.AnsiClass |
                 TypeAttributes.BeforeFieldInit | TypeAttributes.AutoLayout,
@@ -46,15 +143,8 @@ namespace BonsaiWeb
             // Add all properties
             foreach (KeyValuePair<string, JSchema> property in schema.Properties)
             {
-                string propertyTypeSignature = typeSignature;
-
-                if (typeSignature != "")
-                    propertyTypeSignature += ".";
-
-                propertyTypeSignature += property.Key;
-
                 // Convert property to type
-                Type propertyType = SchemaToType(propertyTypeSignature, property.Value);
+                Type propertyType = SchemaToType(property.Value);
 
                 // Add property to object
                 CreateProperty(
@@ -64,15 +154,17 @@ namespace BonsaiWeb
             }
 
             Type objectType = typeBuilder.CreateType();
-            return objectType;
 
+            typeCache[schema] = objectType;
+            Debug.WriteLine("Type cache has " + typeCache.Count() + " entries");
+            return objectType;
         }
 
 
-        protected Type ArrayToType(string typeSignature, JSchema schema)
+        private Type ArrayToType(JSchema schema)
         {
             if (schema.Items.Count() == 1) {
-                Type type = SchemaToType(typeSignature + "[]", schema.Items.First());
+                Type type = SchemaToType(schema.Items.First());
                 return type.MakeArrayType();
             }
             
@@ -84,7 +176,7 @@ namespace BonsaiWeb
         }
 
 
-        public Type SchemaToType(string typeSignature, JSchema schema)
+        public Type SchemaToType(JSchema schema)
         {
             switch (schema.Type)
             {
@@ -101,9 +193,9 @@ namespace BonsaiWeb
                     return typeof(System.String);
 
                 case (JSchemaType.Array):
-                    return ArrayToType(typeSignature, schema);
+                    return ArrayToType(schema);
                 case (JSchemaType.Object):
-                    return ObjectToType(typeSignature, schema);
+                    return ObjectToType(schema);
             }
 
             return typeof(System.String);
