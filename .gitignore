@@ -2,3 +2,8 @@
 
 Bonsai.Web/bin
 Bonsai.Web/obj
+
+Tests/SchemaToType/bin
+Tests/SchemaToType/obj
+
+packages/
