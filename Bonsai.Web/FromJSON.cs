@@ -15,58 +15,51 @@ namespace BonsaiWeb
 {
     [WorkflowElementCategory(ElementCategory.Transform)]
     [Description("Converts a string to JSON")]
-    public class FromJSON : CombinatorExpressionBuilder
+    public class FromJSON : SelectBuilder
     {
         public string Schema { get; set; }
 
         private JSONTypeBuilder jtb;
         private int type_id;
 
-        public FromJSON(): base(minArguments: 0, maxArguments: 0)
+        public FromJSON()
         {
             jtb = new JSONTypeBuilder();
 
             Schema = @"{
-                'type': 'array',
-                'item': {'type':'string'}
+                {""type"":""object"",""properties"":{""type"": {""type"": ""string""},""status"":{""type"": ""string""},""message"":{""type"": ""string""}}}
             }";
         }        
 
 
-        protected override Expression BuildCombinator(IEnumerable<Expression> arguments)
+        protected override Expression BuildSelector(Expression argument)
         {
-            var builder = Expression.Constant(this);
+            //var builder = Expression.Constant(JsonConvert);
             type_id += 1;
 
             try {
                 Debug.WriteLine("Generating type...");
                 var schema = JSchema.Parse(Schema);
                 Type outputType = jtb.SchemaToType("root" + type_id, schema);
-                return Expression.Call(builder, "Generate", new[] { outputType });
+                return Expression.Call(
+                    typeof(JsonConvert),
+                    "DeserializeObject", 
+                    new[] { outputType }, 
+                    new[] { argument });
             } catch(JSchemaReaderException readerException) {
                 Debug.WriteLine("JSchemaReaderException: " + readerException.Message);
-                return Expression.Call(builder, "Generate", new[] { typeof(object) });
-            } catch(ArgumentException) {
+                //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
+                throw readerException;
+            } catch(ArgumentException argumentException) {
                 Debug.WriteLine("ArgumentException: duplicate type name?");
-                return Expression.Call(builder, "Generate", new[] { typeof(object) });
+                //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
+                throw argumentException;
             } catch (Exception exception) {
                 Debug.WriteLine("Exception: " + exception.Message);
                 // Something went wrong, how do we handle it?
-                return Expression.Call(builder, "Generate", new[] { typeof(object) });
+                //return Expression.Call(builder, "DeserializeObject", new[] { typeof(object) });
+                throw exception;
             }
-        }
-
-        IObservable<TResult> Generate<TResult>()
-        {
-            return Observable.Return<TResult>(
-
-                JsonConvert.DeserializeObject<TResult>("")
-                
-                );
-
-            return source.Select(x => JsonConvert.DeserializeObject<TResult>(x));
-        }
-            
-        
+        }        
     }
 }
