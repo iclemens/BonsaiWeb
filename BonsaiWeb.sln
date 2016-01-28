@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BonsaiWeb", "Bonsai.Web\BonsaiWeb.csproj", "{06B370BF-B2F2-4BEF-B3C4-FB713CD7B836}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchemaToType", "Tests\SchemaToType\SchemaToType.csproj", "{2DD1B71D-D511-4456-8C29-A36367468532}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{06B370BF-B2F2-4BEF-B3C4-FB713CD7B836}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06B370BF-B2F2-4BEF-B3C4-FB713CD7B836}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06B370BF-B2F2-4BEF-B3C4-FB713CD7B836}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06B370BF-B2F2-4BEF-B3C4-FB713CD7B836}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DD1B71D-D511-4456-8C29-A36367468532}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DD1B71D-D511-4456-8C29-A36367468532}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DD1B71D-D511-4456-8C29-A36367468532}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DD1B71D-D511-4456-8C29-A36367468532}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -19,17 +19,20 @@ namespace BonsaiWeb
     {
         public FromJSON(): base(minArguments: 0, maxArguments: 0)
         {
+            Schema = @"{
+                'type': 'array',
+                'item': {'type':'string'}
+            }";
         }
 
-        public string Schema { get; set; } = @"{
-            'type': 'array',
-            'item': {'type':'string'}
-        }";
+        public string Schema { get; set; }
 
         protected override Expression BuildCombinator(IEnumerable<Expression> arguments)
         {
             var builder = Expression.Constant(this);
             var schema = JSchema.Parse(Schema);
+
+            
 
             //TypeBuilder typeBuilder = 
             Debug.WriteLine(schema.Type.ToString());

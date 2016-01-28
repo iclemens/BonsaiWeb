@@ -17,7 +17,12 @@ namespace BonsaiWeb
 {
     public class WebSocketSource : Source<TSource>
     {
-        public string url { get; set; } = "ws://mt.champalimaud.pt:8080";
+        public string url { get; set; }
+
+        public WebSocketSource()
+        {
+            url = "ws://mt.champalimaud.pt:8080";
+        }
 
         public override IObservable<TSource> Generate()
         {

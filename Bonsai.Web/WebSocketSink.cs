@@ -15,7 +15,12 @@ namespace BonsaiWeb
 {
     public class WebSocketSink : Sink<TSource>
     {
-        public string url { get; set; } = "ws://mt.champalimaud.pt:8080";
+        public string url { get; set; }
+
+        public WebSocketSink()
+        {
+            url = "ws://mt.champalimaud.pt:8080";
+        }
 
         public override IObservable<TSource> Process(IObservable<TSource> source)
         {
