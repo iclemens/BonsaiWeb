@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FromJSON.cs" />
+    <Compile Include="JSONTypeBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WebSocketDisposable.cs" />
     <Compile Include="WebSocketManager.cs" />

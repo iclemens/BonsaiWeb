@@ -17,27 +17,43 @@ namespace BonsaiWeb
     [Description("Converts a string to JSON")]
     public class FromJSON : CombinatorExpressionBuilder
     {
+        public string Schema { get; set; }
+
+        private JSONTypeBuilder jtb;
+        private int type_id;
+
         public FromJSON(): base(minArguments: 0, maxArguments: 0)
         {
+            jtb = new JSONTypeBuilder();
+
             Schema = @"{
                 'type': 'array',
                 'item': {'type':'string'}
             }";
-        }
+        }        
 
-        public string Schema { get; set; }
 
         protected override Expression BuildCombinator(IEnumerable<Expression> arguments)
         {
             var builder = Expression.Constant(this);
-            var schema = JSchema.Parse(Schema);
+            type_id += 1;
 
-            
-
-            //TypeBuilder typeBuilder = 
-            Debug.WriteLine(schema.Type.ToString());
-
-            return Expression.Call(builder, "Generate", new[] { typeof(Object) });
+            try {
+                Debug.WriteLine("Generating type...");
+                var schema = JSchema.Parse(Schema);
+                Type outputType = jtb.SchemaToType("root" + type_id, schema);
+                return Expression.Call(builder, "Generate", new[] { outputType });
+            } catch(JSchemaReaderException readerException) {
+                Debug.WriteLine("JSchemaReaderException: " + readerException.Message);
+                return Expression.Call(builder, "Generate", new[] { typeof(object) });
+            } catch(ArgumentException) {
+                Debug.WriteLine("ArgumentException: duplicate type name?");
+                return Expression.Call(builder, "Generate", new[] { typeof(object) });
+            } catch (Exception exception) {
+                Debug.WriteLine("Exception: " + exception.Message);
+                // Something went wrong, how do we handle it?
+                return Expression.Call(builder, "Generate", new[] { typeof(object) });
+            }
         }
 
         IObservable<TResult> Generate<TResult>()
@@ -47,7 +63,8 @@ namespace BonsaiWeb
                 JsonConvert.DeserializeObject<TResult>("")
                 
                 );
-            //return source.Select(x => JsonConvert.DeserializeObject<TResult>(x));
+
+            return source.Select(x => JsonConvert.DeserializeObject<TResult>(x));
         }
             
         
